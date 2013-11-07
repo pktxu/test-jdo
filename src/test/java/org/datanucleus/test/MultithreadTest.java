@@ -1,14 +1,16 @@
 package org.datanucleus.test;
 
-import org.junit.*;
+import static org.junit.Assert.fail;
+
 import javax.jdo.*;
 
-import static org.junit.Assert.*;
-import mydomain.model.*;
+import mydomain.model.Person;
 import org.datanucleus.util.NucleusLogger;
+import org.junit.Test;
 
 public class MultithreadTest
 {
+
     @Test
     public void testMulti()
     {
@@ -17,32 +19,7 @@ public class MultithreadTest
 
         try
         {
-            // Persist some data
-            NucleusLogger.GENERAL.debug(">> Persisting data");
-            PersistenceManager pm = pmf.getPersistenceManager();
-            Transaction tx = pm.currentTransaction();
-            try
-            {
-                tx.begin();
-
-                // [Add persistence of sample data for the test]
-
-                tx.commit();
-            }
-            catch (Throwable thr)
-            {
-                NucleusLogger.GENERAL.error("Exception persisting objects", thr);
-                fail("Exception persisting data : " + thr.getMessage());
-            }
-            finally
-            {
-                if (tx.isActive())
-                {
-                    tx.rollback();
-                }
-                pm.close();
-            }
-            NucleusLogger.GENERAL.debug(">> Persisted data");
+            // do NOT persist any data, since we are pointing at initialization issues
 
             // Create the Threads
             int THREAD_SIZE = 500;
@@ -62,7 +39,7 @@ public class MultithreadTest
             }
 
             // Run the threads
-            NucleusLogger.GENERAL.debug(">> Starting threads");
+            NucleusLogger.GENERAL.info(">> Starting threads");
             for (int i = 0; i < THREAD_SIZE; i++)
             {
                 threads[i].start();
@@ -78,7 +55,7 @@ public class MultithreadTest
                     fail(e.getMessage());
                 }
             }
-            NucleusLogger.GENERAL.debug(">> Completed threads");
+            NucleusLogger.GENERAL.info(">> Completed threads");
 
             // Process any errors from Threads and fail the test if any failed
             for (String error : threadErrors)
@@ -105,29 +82,62 @@ public class MultithreadTest
      */
     protected String performTest(PersistenceManagerFactory pmf)
     {
-        PersistenceManager pm = pmf.getPersistenceManager();
-        Transaction tx = pm.currentTransaction();
-        try
-        {
-            tx.begin();
+        PersistenceManager pm = null;
+        Transaction tx = null;
+        for (int i = 0; i < 100; i++) {
+            long id = Long.MIN_VALUE;
+            pm = pmf.getPersistenceManager();
+            tx = pm.currentTransaction();
+            // store
+            try {
+                tx.begin();
 
-            // [Add persistence code to perform what is needed by this PM]
+                Person p = new Person(String.valueOf(Math.random()));
+                p = pm.makePersistent(p);
+                id = p.getId();
 
-            tx.commit();
-        }
-        catch (Throwable thr)
-        {
-            NucleusLogger.GENERAL.error("Exception performing test", thr);
-            return "Exception performing test : " + thr.getMessage();
-        }
-        finally
-        {
-            if (tx.isActive())
-            {
-                tx.rollback();
+                tx.commit();
             }
-            pm.close();
+            catch (Throwable thr)
+            {
+                NucleusLogger.GENERAL.error("Exception performing test", thr);
+                return "Exception performing test : " + thr.getMessage();
+            }
+            finally {
+                if (tx.isActive())
+                {
+                    tx.rollback();
+                }
+                pm.close();
+            }
+            pm = pmf.getPersistenceManager();
+            tx = pm.currentTransaction();
+            // fetch
+            try {
+                tx.begin();
+                pm.getObjectById(Person.class, id);
+                tx.commit();
+            }
+            catch (JDOObjectNotFoundException e)
+            {
+                NucleusLogger.GENERAL.info("No person with id " + id);
+            }
+            catch (Throwable thr)
+            {
+                String s = new String();
+                thr.printStackTrace();
+                NucleusLogger.GENERAL.error("Exception performing test", thr);
+                return "Exception performing test : " + thr.getMessage();
+            }
+            finally
+            {
+                if (tx.isActive())
+                {
+                    tx.rollback();
+                }
+                pm.close();
+            }
         }
-        return null;
+    return null;
     }
 }

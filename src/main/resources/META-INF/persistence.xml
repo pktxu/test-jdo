@@ -7,17 +7,18 @@
     <persistence-unit name="MyTest">
         <!-- Add all of your model classes here -->
         <class>mydomain.model.Person</class>
+        <class>mydomain.model.Alias</class>
         <exclude-unlisted-classes />
         <properties>
             <!-- Update these datastore details if different -->
             <property name="javax.jdo.PersistenceManagerFactoryClass" value="org.datanucleus.api.jdo.JDOPersistenceManagerFactory"/>
-            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:mem:nucleus"/>
-            <property name="javax.jdo.option.ConnectionDriverName" value="org.h2.Driver"/>
-            <property name="javax.jdo.option.ConnectionUserName" value="sa"/>
-            <property name="javax.jdo.option.ConnectionPassword" value=""/>
+	    <property name="javax.jdo.option.ConnectionURL" value="jdbc:postgresql://localhost/test-jdo"/>
+            <property name="javax.jdo.option.ConnectionDriverName" value="org.postgresql.Driver"/>
+            <property name="javax.jdo.option.ConnectionUserName" value="user"/>
+            <property name="javax.jdo.option.ConnectionPassword" value="password"/>
 
-            <property name="datanucleus.autoCreateSchema" value="true"/>
-            <property name="datanucleus.autoCreateColumns" value="true"/>
+            <property name="datanucleus.autoCreateSchema" value="false"/>
+            <property name="datanucleus.autoCreateColumns" value="false"/>
         </properties>
     </persistence-unit>
 

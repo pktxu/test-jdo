@@ -10,6 +10,7 @@ import org.datanucleus.util.NucleusLogger;
 public class SimpleTest
 {
     @Test
+    @Ignore
     public void testSimple()
     {
         NucleusLogger.GENERAL.info(">> test START");
